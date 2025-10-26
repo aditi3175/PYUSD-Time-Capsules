@@ -1,0 +1,104 @@
+import React from "react";
+import type { Capsule } from "../types";
+import { formatPYUSD, formatTimestamp } from "../utils/helpers";
+
+interface CapsuleCardProps {
+  capsule: Capsule;
+}
+
+const CapsuleCard: React.FC<CapsuleCardProps> = ({ capsule }) => {
+  const now = Math.floor(Date.now() / 1000);
+  const isUnlocked = capsule.unlockTime <= now;
+  const canOpen = isUnlocked && !capsule.opened;
+  const timeLeft = capsule.unlockTime - now;
+
+  const formatTimeLeft = (seconds: number) => {
+    if (seconds <= 0) return "Unlocked!";
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+
+    if (days > 0) return `${days}d ${hours}h left`;
+    if (hours > 0) return `${hours}h ${minutes}m left`;
+    return `${minutes}m left`;
+  };
+
+  return (
+    <div className="bg-gray-800/50 backdrop-blur-xl border border-purple-500/30 rounded-2xl p-6 hover:scale-105 hover:border-purple-500/60 transition-all duration-300 shadow-lg shadow-purple-500/10 hover:shadow-purple-500/30">
+      {/* Status Badge */}
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          {capsule.opened ? (
+            <span className="inline-flex items-center px-3 py-1 bg-gray-700 text-gray-300 text-xs rounded-full">
+              <span className="mr-1">✓</span> Opened
+            </span>
+          ) : canOpen ? (
+            <span className="inline-flex items-center px-3 py-1 bg-green-500/20 text-green-300 text-xs rounded-full border border-green-500/50 animate-pulse">
+              <span className="mr-1">⚡</span> Ready to Open!
+            </span>
+          ) : (
+            <span className="inline-flex items-center px-3 py-1 bg-yellow-500/20 text-yellow-300 text-xs rounded-full border border-yellow-500/50">
+              <span className="mr-1">🔒</span> {formatTimeLeft(timeLeft)}
+            </span>
+          )}
+        </div>
+        <div className="text-right">
+          <p className="text-2xl font-bold bg-linear-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            {formatPYUSD(capsule.amount)}
+          </p>
+        </div>
+      </div>
+
+      {/* Message */}
+      <div className="mb-4">
+        <p className="text-white font-medium text-lg mb-2 line-clamp-2">
+          {capsule.message}
+        </p>
+      </div>
+
+      {/* File Hash */}
+      {capsule.fileHash && (
+        <div className="mb-4 p-3 bg-gray-900/50 rounded-xl border border-purple-500/20">
+          <p className="text-purple-300 text-xs mb-1">📎 File Hash:</p>
+          <p className="text-gray-400 text-xs font-mono break-all">
+            {capsule.fileHash.slice(0, 20)}...{capsule.fileHash.slice(-10)}
+          </p>
+        </div>
+      )}
+
+      {/* Details */}
+      <div className="space-y-2 pt-4 border-t border-gray-700">
+        <div className="flex items-center text-sm">
+          <span className="text-gray-400 mr-2">👤</span>
+          <span className="text-gray-400">Owner:</span>
+          <span className="ml-auto text-purple-300 font-mono text-xs">
+            {capsule.owner.slice(0, 6)}...{capsule.owner.slice(-4)}
+          </span>
+        </div>
+        <div className="flex items-center text-sm">
+          <span className="text-gray-400 mr-2">🕐</span>
+          <span className="text-gray-400">Unlock Time:</span>
+          <span className="ml-auto text-purple-300 text-xs">
+            {formatTimestamp(capsule.unlockTime)}
+          </span>
+        </div>
+        <div className="flex items-center text-sm">
+          <span className="text-gray-400 mr-2">📊</span>
+          <span className="text-gray-400">Status:</span>
+          <span className="ml-auto text-purple-300 text-xs">
+            {capsule.opened ? "Opened" : "Locked"}
+          </span>
+        </div>
+      </div>
+
+      {/* Action Button */}
+      {canOpen && (
+        <button className="w-full mt-4 py-3 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-xl font-semibold shadow-lg shadow-green-500/50 hover:shadow-green-500/80 transition-all duration-300 hover:scale-105">
+          🔓 Open Capsule
+        </button>
+      )}
+    </div>
+  );
+};
+
+export default CapsuleCard;
