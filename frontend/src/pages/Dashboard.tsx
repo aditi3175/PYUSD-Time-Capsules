@@ -15,7 +15,7 @@ const Dashboard: React.FC = () => {
     try {
       const totalCountRaw = await capsule.capsuleCount();
       const totalCount = BigInt(totalCountRaw.toString());
-      
+
 
       if (totalCount === 0n) {
         setCapsules([]);
