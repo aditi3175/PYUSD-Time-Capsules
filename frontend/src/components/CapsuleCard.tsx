@@ -1,12 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import type { Capsule } from "../types";
 import { formatPYUSD, formatTimestamp } from "../utils/helpers";
+import { useContracts } from "../context/ContractContext";
 
 interface CapsuleCardProps {
   capsule: Capsule;
 }
 
 const CapsuleCard: React.FC<CapsuleCardProps> = ({ capsule }) => {
+  const { withdrawCapsule, withdrawCapsuleCrossChain, transferCapsuleOwnership } = useContracts();
+  const [recipient, setRecipient] = useState("");
+  const [targetChainId, setTargetChainId] = useState<number>(11155420); // example Optimism Sepolia
   const now = Math.floor(Date.now() / 1000);
   const isUnlocked = capsule.unlockTime <= now;
   const canOpen = isUnlocked && !capsule.opened;
@@ -91,12 +95,50 @@ const CapsuleCard: React.FC<CapsuleCardProps> = ({ capsule }) => {
         </div>
       </div>
 
-      {/* Action Button */}
-      {canOpen && (
-        <button className="w-full mt-4 py-3 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-xl font-semibold shadow-lg shadow-green-500/50 hover:shadow-green-500/80 transition-all duration-300 hover:scale-105">
-          🔓 Open Capsule
-        </button>
-      )}
+      {/* Actions */}
+      <div className="space-y-3 mt-4">
+        {canOpen && (
+          <>
+            <button
+              onClick={() => withdrawCapsule(capsule.id as number)}
+              className="w-full py-3 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 rounded-xl font-semibold shadow-lg shadow-green-500/50 hover:shadow-green-500/80 transition-all duration-300 hover:scale-105"
+            >
+              🔓 Open Capsule
+            </button>
+            <div className="flex items-center gap-2">
+              <input
+                value={targetChainId}
+                onChange={(e) => setTargetChainId(Number(e.target.value))}
+                className="flex-1 px-3 py-2 bg-gray-900/60 border border-gray-700 rounded-lg text-sm"
+                placeholder="Target Chain ID"
+              />
+              <button
+                onClick={() => withdrawCapsuleCrossChain(capsule.id as number, targetChainId)}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-sm"
+              >
+                🌉 Cross-Chain Withdraw
+              </button>
+            </div>
+          </>
+        )}
+
+        {!capsule.opened && (
+          <div className="flex items-center gap-2">
+            <input
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              className="flex-1 px-3 py-2 bg-gray-900/60 border border-gray-700 rounded-lg text-sm"
+              placeholder="Recipient address"
+            />
+            <button
+              onClick={() => transferCapsuleOwnership(capsule.id as number, recipient)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm"
+            >
+              🎁 Transfer
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -104,6 +104,16 @@ export const timeCapsuleABI = [
     type: "function",
   },
   {
+    inputs: [
+      { internalType: "uint256", name: "_id", type: "uint256" },
+      { internalType: "address", name: "_newOwner", type: "address" },
+    ],
+    name: "transferCapsuleOwnership",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [{ internalType: "uint256", name: "_id", type: "uint256" }],
     name: "getCapsule",
     outputs: [
@@ -208,6 +218,16 @@ export const timeCapsuleABI = [
       },
     ],
     name: "CapsuleOpened",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: "uint256", name: "id", type: "uint256" },
+      { indexed: true, internalType: "address", name: "from", type: "address" },
+      { indexed: true, internalType: "address", name: "to", type: "address" },
+    ],
+    name: "CapsuleOwnershipTransferred",
     type: "event",
   },
 ];

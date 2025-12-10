@@ -119,3 +119,23 @@ npx hardhat compile
 Main contract logic deployed on the source chain (Sepolia).
 
 Note: This project demonstrates cross-chain functionality. Ensure your MetaMask wallet is connected to Sepolia (Chain ID 11155111) to begin the cross-chain transaction flow.
+
+Environment
+
+Create a `.env` at the repo root (see `.env.example`):
+
+```
+SEPOLIA_RPC_URL=
+PRIVATE_KEY=
+PYUSD_ADDRESS=
+TIME_CAPSULE_ADDRESS=
+```
+
+Create `frontend/.env` (see `frontend/.env.example`):
+
+```
+VITE_PYUSD_ADDRESS=
+VITE_TIME_CAPSULE_ADDRESS=
+VITE_NEXUS_ROUTER_ADDRESS=
+VITE_NEXUS_TOKEN_SYMBOL=PYUSD
+```

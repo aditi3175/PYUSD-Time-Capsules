@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { useContracts } from "../context/ContractContext";
 
@@ -28,18 +28,39 @@ const CapsuleForm: React.FC = () => {
     unlockTime: "",
     amount: "",
     targetChain: SEPOLIA_CHAIN_ID,
+    token: "PYUSD", // Default to PYUSD
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string>("");
 
+  // Ensure token is correct when target chain changes
+  useEffect(() => {
+    if (formData.targetChain !== SEPOLIA_CHAIN_ID && formData.token === "PYUSD") {
+      setFormData(prev => ({ ...prev, token: "USDC" }));
+    } else if (formData.targetChain === SEPOLIA_CHAIN_ID && formData.token !== "PYUSD") {
+      setFormData(prev => ({ ...prev, token: "PYUSD" }));
+    }
+  }, [formData.targetChain, formData.token]);
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const newFormData = { ...formData, [e.target.name]: e.target.value };
+    
+    // If target chain changes to cross-chain and token is PYUSD, switch to USDC
+    if (e.target.name === "targetChain" && e.target.value !== SEPOLIA_CHAIN_ID && formData.token === "PYUSD") {
+      newFormData.token = "USDC";
+    }
+    // If target chain changes back to Sepolia, switch to PYUSD
+    if (e.target.name === "targetChain" && e.target.value === SEPOLIA_CHAIN_ID) {
+      newFormData.token = "PYUSD";
+    }
+    
+    setFormData(newFormData);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,10 +113,19 @@ const CapsuleForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const amountWei = ethers.parseUnits(formData.amount, 18);
       const targetChain = Number(formData.targetChain);
+      
+      // Determine token decimals: USDC/USDT use 6, PYUSD uses 18
+      let decimals = 18; // Default for PYUSD
+      if (formData.targetChain !== SEPOLIA_CHAIN_ID) {
+        // Cross-chain tokens (USDC/USDT) use 6 decimals
+        decimals = 6;
+      }
+      
+      const amountWei = ethers.parseUnits(formData.amount, decimals);
 
       if (formData.targetChain === SEPOLIA_CHAIN_ID) {
+        // Same chain - use PYUSD
         await createCapsule(
           amountWei,
           formData.message,
@@ -103,12 +133,23 @@ const CapsuleForm: React.FC = () => {
           unlockTimestamp
         );
       } else {
+        // Cross-chain - use selected token (USDC/USDT)
+        // Ensure token is valid for cross-chain (not PYUSD)
+        const selectedToken = formData.token && formData.token !== "PYUSD" 
+          ? formData.token 
+          : "USDC"; // Default to USDC if somehow PYUSD is selected
+        
+        console.log("Creating cross-chain capsule with token:", selectedToken);
+        console.log("Form data token:", formData.token);
+        console.log("Amount (wei):", amountWei.toString(), "decimals:", decimals);
+        
         await createCapsuleCrossChain(
           amountWei,
           formData.message,
           formData.fileHash || "",
           unlockTimestamp,
-          targetChain
+          targetChain,
+          selectedToken
         );
       }
 
@@ -118,6 +159,7 @@ const CapsuleForm: React.FC = () => {
         unlockTime: "",
         amount: "",
         targetChain: SEPOLIA_CHAIN_ID,
+        token: "PYUSD",
       });
       setSelectedFile(null);
       setFilePreview(null);
@@ -241,7 +283,7 @@ const CapsuleForm: React.FC = () => {
 
               <div className="bg-gray-900/50 p-6 rounded-2xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300">
                 <label className="block text-purple-300 font-semibold mb-3 flex items-center">
-                  <span className="mr-2">💰</span> Amount (PYUSD)
+                  <span className="mr-2">💰</span> Amount ({formData.targetChain === SEPOLIA_CHAIN_ID ? "PYUSD" : formData.token})
                 </label>
                 <input
                   type="number"
@@ -257,6 +299,27 @@ const CapsuleForm: React.FC = () => {
               </div>
             </div>
 
+            {/* Token Selection for Cross-Chain */}
+            {formData.targetChain !== SEPOLIA_CHAIN_ID && (
+              <div className="bg-gray-900/50 p-6 rounded-2xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300">
+                <label className="block text-purple-300 font-semibold mb-3 flex items-center">
+                  <span className="mr-2">💰</span> Token for Cross-Chain
+                </label>
+                <select
+                  name="token"
+                  value={formData.token}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl bg-gray-800/80 border border-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/50 focus:outline-none text-white cursor-pointer transition-all"
+                >
+                  <option value="USDC">USDC (Supported for Cross-Chain)</option>
+                  <option value="USDT">USDT (Supported for Cross-Chain)</option>
+                </select>
+                <p className="text-xs text-purple-400 mt-2">
+                  Select USDC or USDT for cross-chain bridging. PYUSD is only available on Sepolia.
+                </p>
+              </div>
+            )}
+
             {/* Target Chain */}
             <div className="bg-gray-900/50 p-6 rounded-2xl border border-purple-500/20 hover:border-purple-500/40 transition-all duration-300">
               <label className="block text-purple-300 font-semibold mb-3 flex items-center">
@@ -269,7 +332,7 @@ const CapsuleForm: React.FC = () => {
                 className="w-full px-4 py-3 rounded-xl bg-gray-800/80 border border-gray-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/50 focus:outline-none text-white cursor-pointer transition-all"
               >
                 <option value={SEPOLIA_CHAIN_ID}>
-                  Sepolia (Current Chain)
+                  Sepolia (Current Chain) - PYUSD
                 </option>
                 <option value="11155420">Optimism Sepolia (Cross-Chain)</option>
                 <option value="84532">Base Sepolia (Cross-Chain)</option>
@@ -277,9 +340,30 @@ const CapsuleForm: React.FC = () => {
               </select>
               <p className="text-xs text-purple-400 mt-2">
                 {formData.targetChain === SEPOLIA_CHAIN_ID
-                  ? "✓ Same chain deployment"
-                  : "🌉 Cross-chain bridge & execute"}
+                  ? "✓ Same chain deployment (PYUSD supported)"
+                  : `🌉 Cross-chain bridge & execute (${formData.token})`}
               </p>
+              {formData.targetChain === SEPOLIA_CHAIN_ID && (
+                <div className="mt-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <p className="text-xs text-green-300">
+                    ✓ <strong>PYUSD Supported:</strong> Use Sepolia for PYUSD capsules. 
+                    They will appear in your dashboard immediately.
+                  </p>
+                </div>
+              )}
+              {formData.targetChain !== SEPOLIA_CHAIN_ID && (
+                <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                  <p className="text-xs text-blue-300 mb-2">
+                    🌉 <strong>Cross-Chain Operation:</strong>
+                  </p>
+                  <ul className="text-xs text-blue-300/90 space-y-1 ml-4 list-disc">
+                    <li>Connect wallet on <strong>Sepolia</strong> (source chain)</li>
+                    <li>Using <strong>{formData.token}</strong> for bridging</li>
+                    <li>Capsule will be created on <strong>{formData.targetChain === "421614" ? "Arbitrum Sepolia" : formData.targetChain === "84532" ? "Base Sepolia" : formData.targetChain === "11155420" ? "Optimism Sepolia" : "target chain"}</strong></li>
+                    <li><strong>After creation:</strong> Switch wallet to target chain to view your capsule</li>
+                  </ul>
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
