@@ -14,7 +14,7 @@ declare global {
 const PYUSD_ADDRESS = import.meta.env.VITE_PYUSD_ADDRESS;
 const TIME_CAPSULE_ADDRESS = import.meta.env.VITE_TIME_CAPSULE_ADDRESS;
 const NEXUS_ROUTER_ADDRESS = import.meta.env.VITE_NEXUS_ROUTER_ADDRESS;
-const NEXUS_TOKEN_SYMBOL = import.meta.env.VITE_NEXUS_TOKEN_SYMBOL || "PYUSD";
+//const NEXUS_TOKEN_SYMBOL = import.meta.env.VITE_NEXUS_TOKEN_SYMBOL || "PYUSD";
 const SEPOLIA_CHAIN_ID_HEX = "0xaa36a7"; // 11155111 in hex
 
 // Token addresses on Sepolia testnet
@@ -120,7 +120,7 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({
   const [pyusd, setPyusd] = useState<ethers.Contract | null>(null);
   const [capsule, setCapsule] = useState<ethers.Contract | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentChainId, setCurrentChainId] = useState<string | null>(null);
+  const [, setCurrentChainId] = useState<string | null>(null);
   const [isSepolia, setIsSepolia] = useState(false);
   const [sdkInitialized, setSdkInitialized] = useState(false);
   const isSwitchingChain = useRef(false);
