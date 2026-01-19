@@ -122,7 +122,8 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [, setCurrentChainId] = useState<string | null>(null);
   const [isSepolia, setIsSepolia] = useState(false);
-  const [sdkInitialized, setSdkInitialized] = useState(false);
+  const [_sdkInitialized, setSdkInitialized] = useState(false);
+
   const isSwitchingChain = useRef(false);
 
   // Auto-Connect (Silent, non-blocking connection check)
