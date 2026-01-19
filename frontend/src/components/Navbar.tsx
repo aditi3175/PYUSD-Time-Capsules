@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useContracts } from "../context/ContractContext";
 
 const Navbar: React.FC = () => {
-  const { account, connectWallet, disconnectWallet } = useContracts();
+  const { account, disconnectWallet } = useContracts();
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
