@@ -126,25 +126,39 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({
   const isSwitchingChain = useRef(false);
 
   // Auto-Connect (Silent, non-blocking connection check)
+  // useEffect(() => {
+  //   const checkConnection = async () => {
+  //     if (window.ethereum) {
+  //       try {
+  //         const prov = new ethers.BrowserProvider(window.ethereum);
+  //         const accounts = await prov.send("eth_accounts", []);
+
+  //         // --- CRITICAL CHANGE: Only set state, do not call connectWallet (avoiding race condition) ---
+  //         if (accounts.length > 0) {
+  //           setProvider(prov);
+  //           setAccount(accounts[0]);
+  //         }
+  //       } catch (err) {
+  //         console.error("Auto-connect failed:", err);
+  //       }
+  //     }
+  //   };
+  //   checkConnection();
+  // }, []);
   useEffect(() => {
     const checkConnection = async () => {
       if (window.ethereum) {
         try {
-          const prov = new ethers.BrowserProvider(window.ethereum);
-          const accounts = await prov.send("eth_accounts", []);
-
-          // --- CRITICAL CHANGE: Only set state, do not call connectWallet (avoiding race condition) ---
-          if (accounts.length > 0) {
-            setProvider(prov);
-            setAccount(accounts[0]);
-          }
+          // Just detect MetaMask, do nothing else
+          await window.ethereum.request({ method: "eth_chainId" });
         } catch (err) {
-          console.error("Auto-connect failed:", err);
+          console.error("MetaMask detection failed:", err);
         }
       }
     };
     checkConnection();
   }, []);
+
 
   // Handle Account Changes (Standard Ethers/MetaMask listener)
   useEffect(() => {
@@ -203,35 +217,24 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Separate SDK Initialization Effect (Runs after account/provider are set)
   // Only runs if SDK hasn't been initialized yet (prevents race condition with connectWallet)
-  useEffect(() => {
-    if (account && window.ethereum && !capsule && isSepolia && !sdkInitialized) {
-      const initializeSdkSafely = async () => {
-        try {
-          // 1. Ensure Wallet Connection is stable
-          const prov = new ethers.BrowserProvider(window.ethereum);
-          const signer = await prov.getSigner();
+useEffect(() => {
+  if (account && window.ethereum && !capsule && isSepolia) {
+    const initializeContracts = async () => {
+      try {
+        const prov = new ethers.BrowserProvider(window.ethereum);
+        const signer = await prov.getSigner();
 
-          setPyusd(new ethers.Contract(PYUSD_ADDRESS, pyusdABI, signer));
-          setCapsule(
-            new ethers.Contract(TIME_CAPSULE_ADDRESS, timeCapsuleABI, signer)
-          );
-
-          // 2. Initialize Nexus SDK (will reuse if already initialized)
-          await initNexus(window.ethereum);
-          setSdkInitialized(true);
-          console.log(
-            "✅ Nexus SDK initialized successfully in separate effect."
-          );
-        } catch (sdkError) {
-          console.error(
-            "❌ Nexus SDK initialization FAILED in new effect:",
-            sdkError
-          );
-        }
-      };
-      initializeSdkSafely();
-    }
-  }, [account, isSepolia, sdkInitialized]);
+        setPyusd(new ethers.Contract(PYUSD_ADDRESS, pyusdABI, signer));
+        setCapsule(
+          new ethers.Contract(TIME_CAPSULE_ADDRESS, timeCapsuleABI, signer),
+        );
+      } catch (err) {
+        console.error("Contract init failed:", err);
+      }
+    };
+    initializeContracts();
+  }
+}, [account, isSepolia]);
 
   // Explicit User Connection Handler
   const connectWallet = async (silentReconnect: boolean = false) => {
