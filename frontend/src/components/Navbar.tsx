@@ -82,7 +82,9 @@ const Navbar: React.FC = () => {
               </div>
             ) : (
               <button
-                onClick={connectWallet}
+                onClick={() =>
+                  window.ethereum.request({ method: "eth_requestAccounts" })
+                }
                 className="px-6 py-2.5 bg-linear-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-xl font-semibold shadow-lg shadow-purple-500/50 hover:shadow-purple-500/80 transition-all duration-300 hover:scale-105"
               >
                 🔗 Connect Wallet

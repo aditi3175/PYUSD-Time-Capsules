@@ -127,25 +127,6 @@ export const ContractProvider: React.FC<{ children: React.ReactNode }> = ({
   const isSwitchingChain = useRef(false);
 
   // Auto-Connect (Silent, non-blocking connection check)
-  // useEffect(() => {
-  //   const checkConnection = async () => {
-  //     if (window.ethereum) {
-  //       try {
-  //         const prov = new ethers.BrowserProvider(window.ethereum);
-  //         const accounts = await prov.send("eth_accounts", []);
-
-  //         // --- CRITICAL CHANGE: Only set state, do not call connectWallet (avoiding race condition) ---
-  //         if (accounts.length > 0) {
-  //           setProvider(prov);
-  //           setAccount(accounts[0]);
-  //         }
-  //       } catch (err) {
-  //         console.error("Auto-connect failed:", err);
-  //       }
-  //     }
-  //   };
-  //   checkConnection();
-  // }, []);
   useEffect(() => {
     const checkConnection = async () => {
       if (window.ethereum) {
